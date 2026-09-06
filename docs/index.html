@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101112">
+  <title>SOYA — Oq-qora foto laboratoriyasi</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Playfair+Display:wght@500;600;700&display=swap');
+
+    :root { --ink:#e9e4dc; --muted:#938f89; --line:rgba(233,228,220,.16); --panel:#151617; --night:#101112; --accent:#c7b29b; --accent-soft:rgba(199,178,155,.16); }
+    * { box-sizing:border-box; }
+    html { min-width:320px; background:var(--night); }
+    body { margin:0; color:var(--ink); background:radial-gradient(circle at 72% 10%, #252321 0, transparent 32%), linear-gradient(135deg,#111213 0%,#0d0e0f 100%); font-family:'DM Mono', monospace; min-height:100vh; }
+    body:after { content:""; pointer-events:none; position:fixed; inset:0; opacity:.035; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E"); }
+    .shell { width:min(1380px, calc(100% - 72px)); margin:auto; }
+    header { height:104px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:13px; letter-spacing:.16em; font-size:12px; }
+    .brand-mark { width:26px; height:26px; border:1px solid var(--accent); border-radius:50%; position:relative; }
+    .brand-mark:before { content:""; position:absolute; width:6px; height:6px; background:var(--accent); border-radius:50%; left:9px; top:9px; }
+    .edition { color:var(--muted); font-size:10px; letter-spacing:.16em; text-transform:uppercase; }
+    main { display:grid; grid-template-columns:minmax(0,1fr) 350px; gap:72px; padding:56px 0 72px; }
+    .eyebrow { color:var(--accent); font-size:11px; letter-spacing:.2em; text-transform:uppercase; margin:0 0 18px; }
+    h1 { font:600 clamp(42px, 5vw, 76px)/.96 'Playfair Display', Georgia, serif; letter-spacing:-.04em; max-width:760px; margin:0; }
+    .intro { color:var(--muted); font-size:12px; line-height:1.9; max-width:470px; margin:24px 0 42px; }
+    .stage { position:relative; aspect-ratio:1.38/1; min-height:320px; overflow:hidden; background:linear-gradient(145deg,#242423,#111); border:1px solid var(--line); box-shadow:0 24px 80px rgba(0,0,0,.34); }
+    .stage:before { content:""; position:absolute; inset:12px; border:1px solid rgba(255,255,255,.08); pointer-events:none; z-index:2; }
+    #canvas { width:100%; height:100%; display:block; object-fit:contain; }
+    .empty { position:absolute; inset:0; display:grid; place-items:center; text-align:center; padding:30px; }
+    .empty.hidden { display:none; }
+    .empty-inner { max-width:270px; }
+    .empty-symbol { color:var(--accent); border:1px solid var(--accent); width:58px; height:58px; display:grid; place-items:center; margin:0 auto 20px; font:24px Georgia,serif; border-radius:50%; }
+    .empty h2 { margin:0 0 10px; font:500 25px 'Playfair Display', Georgia, serif; }
+    .empty p { color:var(--muted); font-size:10px; line-height:1.7; margin:0; }
+    .draw-line { position:absolute; left:0; right:0; top:0; height:1px; background:var(--accent); box-shadow:0 0 14px 2px var(--accent); display:none; z-index:3; pointer-events:none; }
+    .draw-line.active { display:block; animation:drawLine 2.4s cubic-bezier(.3,.7,.3,1) forwards; }
+    @keyframes drawLine { to { transform:translateY(var(--line-end)); opacity:0; } }
+    .stage-meta { display:flex; justify-content:space-between; padding-top:12px; color:var(--muted); font-size:10px; letter-spacing:.05em; }
+    .stage-meta strong { color:var(--ink); font-weight:400; }
+    .upload { margin-top:24px; display:flex; gap:12px; align-items:center; }
+    .button { border:1px solid var(--accent); background:var(--accent); color:#171514; padding:13px 18px; font:500 10px 'DM Mono',monospace; letter-spacing:.14em; text-transform:uppercase; cursor:pointer; transition:.2s ease; }
+    .button:hover { background:#e2d2bf; border-color:#e2d2bf; transform:translateY(-2px); }
+    .button.ghost { background:transparent; color:var(--ink); border-color:var(--line); }
+    .button.ghost:hover { background:var(--accent-soft); border-color:var(--accent); }
+    .drop-note { color:var(--muted); font-size:10px; }
+    aside { padding-top:14px; }
+    .panel { border-top:1px solid var(--line); padding:20px 0 22px; }
+    .panel:first-child { padding-top:0; border-top:0; }
+    .panel-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; font-size:11px; letter-spacing:.12em; text-transform:uppercase; }
+    .panel-title span { color:var(--accent); font-size:10px; }
+    .moods { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+    .mood { background:transparent; border:1px solid var(--line); color:var(--muted); padding:13px 4px; font:10px 'DM Mono',monospace; cursor:pointer; }
+    .mood:hover,.mood.active { border-color:var(--accent); color:var(--ink); background:var(--accent-soft); }
+    .mood-dot { width:18px; height:18px; border-radius:50%; margin:0 auto 9px; display:block; background:linear-gradient(135deg,#eee,#222); }
+    .mood:nth-child(2) .mood-dot { background:linear-gradient(135deg,#d8d0c8,#252a2a); }
+    .mood:nth-child(3) .mood-dot { background:linear-gradient(135deg,#dcd7d1,#090909); }
+    .slider-row { display:grid; grid-template-columns:90px 1fr 34px; gap:12px; align-items:center; color:var(--muted); font-size:10px; margin:17px 0; }
+    input[type=range] { accent-color:var(--accent); width:100%; cursor:pointer; }
+    .value { color:var(--ink); text-align:right; }
+    .tip { color:var(--muted); font-size:10px; line-height:1.8; padding:15px; background:rgba(255,255,255,.035); border-left:2px solid var(--accent); }
+    .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:5px; }
+    .actions .button { padding-inline:8px; }
+    footer { border-top:1px solid var(--line); padding:18px 0 28px; color:var(--muted); font-size:10px; display:flex; justify-content:space-between; }
+    .dragging .stage { border-color:var(--accent); }
+    @media (max-width:900px) { .shell{width:min(100% - 36px,700px)} main{grid-template-columns:1fr;gap:42px;padding-top:42px} aside{padding-top:0} }
+    @media (max-width:560px) { header{height:80px}.edition{display:none} .stage{min-height:245px}.upload{align-items:flex-start;flex-direction:column}.drop-note{line-height:1.6} footer{display:block;line-height:2} footer span{display:block} }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header><div class="brand"><span class="brand-mark"></span><span>SOYA / FOTO LAB</span></div><div class="edition">01 — MONOCHROME STUDY</div></header>
+    <main>
+      <section>
+        <p class="eyebrow">Rasmni xotiraga aylantiring</p>
+        <h1>Sukut ham bir<br>rangga ega.</h1>
+        <p class="intro">Rasmingizni oq-qora chiziqlar bilan qayta ko‘ring. SOYA yorug‘likni pasaytiradi, soyani chuqurlashtiradi va har bir kadrga o‘z hikoyasini qoldirishga joy beradi.</p>
+        <div class="stage" id="dropZone">
+          <canvas id="canvas" aria-label="Oq-qora rasm ko‘rinishi"></canvas>
+          <div class="empty" id="emptyState"><div class="empty-inner"><div class="empty-symbol">◌</div><h2>Kadr shu yerda paydo bo‘ladi</h2><p>Rasmni tashlang yoki tanlang.<br>JPG, PNG, WEBP · 12 MB gacha</p></div></div>
+          <div class="draw-line" id="drawLine"></div>
+        </div>
+        <div class="stage-meta"><span>HOLAT: <strong id="status">KUTILMOQDA</strong></span><span id="dimensions">— × —</span></div>
+        <div class="upload"><button class="button" id="chooseBtn">↑ &nbsp; Rasm tanlash</button><input id="fileInput" type="file" accept="image/*" hidden><span class="drop-note">yoki faylni shu oynaga sudrang</span></div>
+      </section>
+      <aside>
+        <div class="panel"><div class="panel-title">Kayfiyat <span id="moodName">SOKIN</span></div><div class="moods"><button class="mood active" data-mood="sokin"><i class="mood-dot"></i>SOKIN</button><button class="mood" data-mood="dardli"><i class="mood-dot"></i>DARDLI</button><button class="mood" data-mood="sovuq"><i class="mood-dot"></i>SOVUQ</button></div></div>
+        <div class="panel"><div class="panel-title">Nozik sozlamalar <span>LIVE</span></div><label class="slider-row"><span>Kontrast</span><input id="contrast" type="range" min="75" max="145" value="112"><span class="value" id="contrastValue">112</span></label><label class="slider-row"><span>Yorug‘lik</span><input id="brightness" type="range" min="70" max="125" value="94"><span class="value" id="brightnessValue">94</span></label><label class="slider-row"><span>Vinyetka</span><input id="vignette" type="range" min="0" max="80" value="38"><span class="value" id="vignetteValue">38</span></label></div>
+        <div class="panel"><p class="tip">“Ba’zi suratlar ko‘rsatilmaydi — seziladi.”<br><br>Har bir o‘zgarish kadrga darhol aks etadi.</p><div class="actions"><button class="button ghost" id="resetBtn">↺ &nbsp; Tozalash</button><button class="button" id="downloadBtn">↓ &nbsp; Saqlash</button></div></div>
+      </aside>
+    </main>
+    <footer><span>SOYA / OQ-QORA TASAVVURLAR</span><span>RASM BRAUZERDAN TASHQARIGA CHIQMAYDI</span></footer>
+  </div>
+  <script>
+    const fileInput = document.querySelector('#fileInput');
+    const chooseBtn = document.querySelector('#chooseBtn');
+    const dropZone = document.querySelector('#dropZone');
+    const canvas = document.querySelector('#canvas');
+    const ctx = canvas.getContext('2d');
+    const emptyState = document.querySelector('#emptyState');
+    const drawLine = document.querySelector('#drawLine');
+    const statusEl = document.querySelector('#status');
+    const dimensions = document.querySelector('#dimensions');
+    const contrast = document.querySelector('#contrast');
+    const brightness = document.querySelector('#brightness');
+    const vignette = document.querySelector('#vignette');
+    let sourceImage = null;
+    let animationFrame;
+    let currentMood = 'sokin';
+    const settings = { sokin: { contrast:112, brightness:94, vignette:38 }, dardli: { contrast:132, brightness:86, vignette:58 }, sovuq: { contrast:120, brightness:90, vignette:68 } };
+
+    chooseBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', event => loadFile(event.target.files[0]));
+    ['dragenter','dragover'].forEach(type => dropZone.addEventListener(type, event => { event.preventDefault(); document.body.classList.add('dragging'); }));
+    ['dragleave','drop'].forEach(type => dropZone.addEventListener(type, event => { event.preventDefault(); document.body.classList.remove('dragging'); }));
+    dropZone.addEventListener('drop', event => loadFile(event.dataTransfer.files[0]));
+
+    function loadFile(file) {
+      if (!file || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = event => { const image = new Image(); image.onload = () => { sourceImage = image; dimensions.textContent = `${image.naturalWidth} × ${image.naturalHeight}`; emptyState.classList.add('hidden'); statusEl.textContent = 'CHIZILMOQDA'; render(true); }; image.src = event.target.result; };
+      reader.readAsDataURL(file);
+    }
+
+    function fitImage() {
+      const scale = Math.min(1, 1800 / Math.max(sourceImage.naturalWidth, sourceImage.naturalHeight));
+      const width = Math.round(sourceImage.naturalWidth * scale); const height = Math.round(sourceImage.naturalHeight * scale);
+      canvas.width = width; canvas.height = height; return { width, height };
+    }
+
+    function render(animate = false) {
+      if (!sourceImage) return;
+      cancelAnimationFrame(animationFrame);
+      const size = fitImage(); const progressStart = animate ? 0 : 1; let started = performance.now();
+      if (animate) { drawLine.classList.remove('active'); void drawLine.offsetWidth; drawLine.style.setProperty('--line-end', `${dropZone.clientHeight}px`); drawLine.classList.add('active'); }
+      function frame(now) {
+        const progress = animate ? Math.min(1, (now - started) / 2400) : progressStart;
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.save(); ctx.filter = `grayscale(1) contrast(${contrast.value}%) brightness(${brightness.value}%)`;
+        if (progress < 1) ctx.beginPath(), ctx.rect(0,0,size.width,size.height * progress), ctx.clip();
+        ctx.drawImage(sourceImage,0,0,size.width,size.height); ctx.restore();
+        const gradient = ctx.createRadialGradient(size.width/2,size.height/2,Math.min(size.width,size.height)*.18,size.width/2,size.height/2,Math.max(size.width,size.height)*.72);
+        gradient.addColorStop(0,'transparent'); gradient.addColorStop(1,`rgba(4,5,6,${Number(vignette.value)/100})`); ctx.fillStyle=gradient; ctx.fillRect(0,0,size.width,size.height);
+        if (progress < 1) animationFrame = requestAnimationFrame(frame); else statusEl.textContent = 'TAYYOR';
+      }
+      requestAnimationFrame(frame);
+    }
+
+    function updateSetting(input, output) { output.textContent = input.value; if (sourceImage) render(false); }
+    contrast.addEventListener('input', () => updateSetting(contrast, document.querySelector('#contrastValue')));
+    brightness.addEventListener('input', () => updateSetting(brightness, document.querySelector('#brightnessValue')));
+    vignette.addEventListener('input', () => updateSetting(vignette, document.querySelector('#vignetteValue')));
+    document.querySelectorAll('.mood').forEach(button => button.addEventListener('click', () => { currentMood = button.dataset.mood; document.querySelectorAll('.mood').forEach(item => item.classList.toggle('active', item === button)); document.querySelector('#moodName').textContent = button.textContent.trim(); Object.entries(settings[currentMood]).forEach(([key,value]) => { document.querySelector(`#${key}`).value=value; document.querySelector(`#${key}Value`).textContent=value; }); if (sourceImage) render(false); }));
+    document.querySelector('#resetBtn').addEventListener('click', () => { sourceImage=null; cancelAnimationFrame(animationFrame); ctx.clearRect(0,0,canvas.width,canvas.height); emptyState.classList.remove('hidden'); statusEl.textContent='KUTILMOQDA'; dimensions.textContent='— × —'; fileInput.value=''; });
+    document.querySelector('#downloadBtn').addEventListener('click', () => { if (!sourceImage) return; const link=document.createElement('a'); link.download='soya-oq-qora.png'; link.href=canvas.toDataURL('image/png'); link.click(); });
+  </script>
+</body>
+</html>

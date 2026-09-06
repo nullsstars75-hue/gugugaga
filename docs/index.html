@@ -32,9 +32,14 @@
     .empty-symbol { color:var(--accent); border:1px solid var(--accent); width:58px; height:58px; display:grid; place-items:center; margin:0 auto 20px; font:24px Georgia,serif; border-radius:50%; }
     .empty h2 { margin:0 0 10px; font:500 25px 'Playfair Display', Georgia, serif; }
     .empty p { color:var(--muted); font-size:10px; line-height:1.7; margin:0; }
-    .draw-line { position:absolute; left:0; right:0; top:0; height:1px; background:var(--accent); box-shadow:0 0 14px 2px var(--accent); display:none; z-index:3; pointer-events:none; }
-    .draw-line.active { display:block; animation:drawLine 2.4s cubic-bezier(.3,.7,.3,1) forwards; }
+    .draw-line { position:absolute; left:0; right:0; top:0; height:2px; background:repeating-linear-gradient(90deg,rgba(199,178,155,.75) 0 4px,transparent 4px 8px); box-shadow:0 0 14px 2px rgba(199,178,155,.65); display:none; z-index:3; pointer-events:none; }
+    .draw-line.active { display:block; animation:drawLine 2.8s cubic-bezier(.22,.7,.24,1) forwards; }
+    .pencil { position:absolute; top:-35px; left:10px; width:42px; height:52px; display:none; z-index:4; pointer-events:none; color:#ddd5c9; filter:drop-shadow(3px 5px 3px rgba(0,0,0,.65)); }
+    .pencil:before { content:"✎"; display:block; font:42px/1 Georgia,serif; transform:rotate(45deg); }
+    .pencil:after { content:""; position:absolute; width:7px; height:7px; left:18px; bottom:-1px; border-radius:50%; background:#191817; box-shadow:0 0 0 3px rgba(199,178,155,.28); }
+    .pencil.active { display:block; animation:pencilDraw 2.8s cubic-bezier(.22,.7,.24,1) forwards; }
     @keyframes drawLine { to { transform:translateY(var(--line-end)); opacity:0; } }
+    @keyframes pencilDraw { 0% { transform:translate(-3px,0) rotate(-5deg); opacity:0; } 5% { opacity:1; } 100% { transform:translate(calc(100% - 45px),var(--line-end)) rotate(5deg); opacity:0; } }
     .stage-meta { display:flex; justify-content:space-between; padding-top:12px; color:var(--muted); font-size:10px; letter-spacing:.05em; }
     .stage-meta strong { color:var(--ink); font-weight:400; }
     .upload { margin-top:24px; display:flex; gap:12px; align-items:center; }
@@ -77,7 +82,7 @@
         <div class="stage" id="dropZone">
           <canvas id="canvas" aria-label="Oq-qora rasm ko‘rinishi"></canvas>
           <div class="empty" id="emptyState"><div class="empty-inner"><div class="empty-symbol">◌</div><h2>Kadr shu yerda paydo bo‘ladi</h2><p>Rasmni tashlang yoki tanlang.<br>JPG, PNG, WEBP · 12 MB gacha</p></div></div>
-          <div class="draw-line" id="drawLine"></div>
+          <div class="draw-line" id="drawLine"></div><div class="pencil" id="pencil" aria-hidden="true"></div>
         </div>
         <div class="stage-meta"><span>HOLAT: <strong id="status">KUTILMOQDA</strong></span><span id="dimensions">— × —</span></div>
         <div class="upload"><button class="button" id="chooseBtn">↑ &nbsp; Rasm tanlash</button><input id="fileInput" type="file" accept="image/*" hidden><span class="drop-note">yoki faylni shu oynaga sudrang</span></div>
@@ -98,6 +103,7 @@
     const ctx = canvas.getContext('2d');
     const emptyState = document.querySelector('#emptyState');
     const drawLine = document.querySelector('#drawLine');
+    const pencil = document.querySelector('#pencil');
     const statusEl = document.querySelector('#status');
     const dimensions = document.querySelector('#dimensions');
     const contrast = document.querySelector('#contrast');
@@ -131,7 +137,8 @@
       if (!sourceImage) return;
       cancelAnimationFrame(animationFrame);
       const size = fitImage(); const progressStart = animate ? 0 : 1; let started = performance.now();
-      if (animate) { drawLine.classList.remove('active'); void drawLine.offsetWidth; drawLine.style.setProperty('--line-end', `${dropZone.clientHeight}px`); drawLine.classList.add('active'); }
+      drawLine.classList.remove('active'); pencil.classList.remove('active');
+      if (animate) { void drawLine.offsetWidth; drawLine.style.setProperty('--line-end', `${dropZone.clientHeight}px`); pencil.style.setProperty('--line-end', `${dropZone.clientHeight}px`); drawLine.classList.add('active'); pencil.classList.add('active'); }
       function frame(now) {
         const progress = animate ? Math.min(1, (now - started) / 2400) : progressStart;
         ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -140,7 +147,7 @@
         ctx.drawImage(sourceImage,0,0,size.width,size.height); ctx.restore();
         const gradient = ctx.createRadialGradient(size.width/2,size.height/2,Math.min(size.width,size.height)*.18,size.width/2,size.height/2,Math.max(size.width,size.height)*.72);
         gradient.addColorStop(0,'transparent'); gradient.addColorStop(1,`rgba(4,5,6,${Number(vignette.value)/100})`); ctx.fillStyle=gradient; ctx.fillRect(0,0,size.width,size.height);
-        if (progress < 1) animationFrame = requestAnimationFrame(frame); else statusEl.textContent = 'TAYYOR';
+        if (progress < 1) animationFrame = requestAnimationFrame(frame); else { drawLine.classList.remove('active'); pencil.classList.remove('active'); statusEl.textContent = 'TAYYOR'; }
       }
       requestAnimationFrame(frame);
     }
